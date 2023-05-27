@@ -1,13 +1,11 @@
 #include "Intersection.h"
 
-Intersection::Intersection(int _x, int _y) {
-	x = _x;
-	y = _y;
+Intersection::Intersection(point_t _coords) {
+	coords = _coords;
 }
 
-Intersection::Intersection(int _x, int _y, intersection_type _type) {
-	x = _x;
-	y = _y;
+Intersection::Intersection(point_t _coords, intersection_type _type) {
+	coords = _coords;
 	type = _type;
 }
 

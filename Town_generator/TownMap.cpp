@@ -15,8 +15,6 @@ void TownMap::generate(int number_of_points, int seed) {
 	generatePlotCenters(number_of_points, seed);
 	triangulate();
 	createPlots();
-	//boundPlots();
-	//fixPlots();
 	calculateBorders();
 }
 
@@ -24,7 +22,6 @@ void TownMap::generate() {
 	addOutsidePoints();
 	triangulate();
 	createPlots();
-	//boundPlots();
 	calculateBorders();
 }
 
@@ -81,28 +78,30 @@ void TownMap::addOutsidePoints() {
 void TownMap::triangulate() {
 
 	struct edge {
-		int p1id;
-		int p2id;
+		point_t *p1;
+		point_t *p2;
 		bool duplicate = false;
 
 		bool equal(edge e) {
-			return ((e.p1id == p1id) && (e.p2id == p2id))
-				|| ((e.p2id == p1id) && (e.p1id == p2id));
+			return ((e.p1 == p1) && (e.p2 == p2))
+				|| ((e.p2 == p1) && (e.p1 == p2));
 		}
 	};
 
 	triangles.clear();
 	std::vector<edge> edgeList;
 	
-	triangles.push_back({ -1,-2,-3, plot_centers });
+	point_t dp1 = { -4000,3200 };	//punkty pomocnicze
+	point_t dp2 = { 2000,-4000 };
+	point_t dp3 = { 4000,3200 };
+
+	triangles.push_back({ &dp1, &dp2, &dp3 });
 
 	
 	for (int i = 0; i < plot_centers.size(); i++) {
 		for (int j = 0; j < triangles.size(); j++) {
-
-
 			
-			if (triangles[j].circumcircleContains(plot_centers[i])) {
+			if (triangles[j].circumcircleContains(&plot_centers[i])) {
 
 				edgeList.push_back({ triangles[j].p1, triangles[j].p2 });
 				edgeList.push_back({ triangles[j].p2, triangles[j].p3 });
@@ -136,19 +135,26 @@ void TownMap::triangulate() {
 		
 		//dodawanie trójk¹tów
 		for (int k = 0; k < edgeList.size(); k++) {
-			triangles.push_back(Triangle( edgeList.at(k).p1id, edgeList.at(k).p2id, i, plot_centers));
+			triangles.push_back(Triangle( edgeList.at(k).p1, edgeList.at(k).p2, &plot_centers.at(i)));
 		}
 		edgeList.clear();
 	}
 	
 	//usuwanie trójk¹tów pomocniczych
 	for (int i = 0; i < triangles.size(); i++) {
-		if (triangles.at(i).hasPoint(-1) || triangles.at(i).hasPoint(-2) || triangles.at(i).hasPoint(-3)) {
+		if (triangles.at(i).hasPoint(&dp1) || triangles.at(i).hasPoint(&dp2) || triangles.at(i).hasPoint(&dp3)) {
 			triangles.erase(triangles.begin() + i);
 			i--;
 		}
 	}
 
+}
+
+Plot* TownMap::findPlotWithCenter(point_t* center) {
+	for (Plot& p : plots) {
+		if (p.center == center) return &p;
+	}
+	return nullptr;
 }
 
 void TownMap::createPlots() {
@@ -161,15 +167,17 @@ void TownMap::createPlots() {
 	for (int i = 0; i < triangles.size(); i++) {
 
 		//tworzenie skrzy¿owañ
-		intersections.push_back({	triangles.at(i).circumcircle.center.x,
-									triangles.at(i).circumcircle.center.y });
+		intersections.push_back({ {	triangles.at(i).getCircumcircleCenter().x,
+									triangles.at(i).getCircumcircleCenter().y } });
+		intersections.at(i).origin_triangle = &triangles.at(i);
+
 		//je¿eli skrzy¿owanie poza granicami miasta -> oznacz
-		if (intersections[i].x < -border_thickness ||
-			intersections[i].x > canvas_width + border_thickness ||
-			intersections[i].y < -border_thickness ||
-			intersections[i].y > canvas_height + border_thickness) 
+		if (intersections[i].coords.x < -border_thickness ||
+			intersections[i].coords.x > canvas_width + border_thickness ||
+			intersections[i].coords.y < -border_thickness ||
+			intersections[i].coords.y > canvas_height + border_thickness)
 			{
-			intersections[i].type = OUT_OF_BOUNDS;
+			intersections[i].position = I_OUTSIDE;
 			}
 	}
 
@@ -178,208 +186,56 @@ void TownMap::createPlots() {
 	for (int i = 0; i < triangles.size(); i++){
 		for (int j = i + 1; j < triangles.size(); j++) {
 			if (triangles[i].isAdjacent(triangles[j])) {
-				roads.push_back({ i,j });
-				intersections[j].connected_intersections_id.push_back(i);
-				intersections[i].connected_intersections_id.push_back(j);
-
-				//po dodaniu wskaŸników
+				roads.push_back({ &intersections[i],&intersections[j]});
+				
 				intersections[j].connected_intersections.push_back(&intersections[i]);
 				intersections[i].connected_intersections.push_back(&intersections[j]);
-				//
+				
 			}
 		}
 	}
 
-	for (int i = 0; i < plot_centers.size(); i++) {
-		plots.push_back({ i });
+	//tworzenie dzia³ek
+	for (int i = 0; i < plot_centers.size(); i++) { //
+		plots.push_back({ &plot_centers.at(i) });
 		
-		//przyporz¹dkowywanie skrzy¿owañ przyleg³ych do dzia³ek
+		//przyporz¹dkowywanie skrzy¿owañ przyleg³ych do dzia³ek //intersections.size == triangles.size
 		for (int j = 0; j < intersections.size(); j++) {
-			if (triangles.at(j).hasPoint(i)) {
-				plots[i].adj_intersection_id.push_back(j);
-				//po dodaniu wskaŸników
+			if (triangles.at(j).hasPoint(&plot_centers[i])) {
+				
 				plots[i].adj_intersections.push_back(&intersections[j]);
+				
 				//
-				if (intersections[j].type == OUT_OF_BOUNDS) {
-					plots[i].type = OMITTED;
+				if (intersections[j].position == I_OUTSIDE) {
+					plots[i].isValid = false;
 				}
 				
 			}
 		}
-		if (plots[i].adj_intersection_id.size() <= 3) {
-			plots[i].type = OMITTED;
-		}
-		
-	}
-	
-}
-
-void fixConnectionsOfNewIntersection(int inter1, int inter2, std::vector<Intersection>& intersections) {
-	intersections.back().connected_intersections_id.push_back(inter1);
-	intersections.back().connected_intersections_id.push_back(inter2);
-	for (int k = 0; k < intersections[inter1].connected_intersections_id.size(); k++) {
-		if (intersections[inter1].connected_intersections_id[k] == inter2) {
-			intersections[inter1].connected_intersections_id[k] = intersections.size() - 1;
-			break;
-		}
-	}
-	for (int k = 0; k < intersections[inter2].connected_intersections_id.size(); k++) {
-		if (intersections[inter2].connected_intersections_id[k] == inter1) {
-			intersections[inter2].connected_intersections_id[k] = intersections.size() - 1;
-			break;
-		}
-	}
-}
-
-void TownMap::boundPlots() {
-	
-	
-	for (int i = 0; i < intersections.size(); i++) {
-
-		bool abandon = true;
-		for (int j = 0; j < intersections[i].connected_intersections_id.size(); j++) {
-			if (intersections[intersections[i].connected_intersections_id[j]].type != OUT_OF_BOUNDS) {
-				abandon = false;
-				break;
-			}
-		}
-		if (abandon) continue;
-
-
-		//za bardzo w lewo
-		if (intersections[i].x < -border_thickness) {
-
-			for (int j = 0; j < intersections[i].connected_intersections_id.size(); j++) {
-				int connected_intersection_id = intersections[i].connected_intersections_id[j];
-				if (intersections[connected_intersection_id].type == OUT_OF_BOUNDS) continue;
-				Vector2 new_intersection = { 500,0};
-				
-				if (!CheckCollisionLines({ (float)intersections[i].x, (float)intersections[i].y },
-					{ (float)intersections[connected_intersection_id].x, (float)intersections[connected_intersection_id].y }, //XD a mog³em to robiæ na wskaŸnikach
-					{ -(float)border_thickness, -(float)border_thickness },
-					{ -(float)border_thickness, (float)canvas_height+border_thickness },
-					&new_intersection)) {
-					break;
-				}
-				
-
-				// tworzenie nowych po³¹czeñ miêdzy skrzy¿owaniami
-				intersections.push_back({ (int)new_intersection.x, (int)new_intersection.y, ON_BORDER });
-				//intersections.back().connected_intersections_id.push_back(connected_intersection_id);
-				//intersections.back().connected_intersections_id.push_back(i);
-
-				fixConnectionsOfNewIntersection(connected_intersection_id, i, intersections);
-				/*for (int k = 0; k < intersections[connected_intersection_id].connected_intersections_id.size(); k++) {
-					if (intersections[connected_intersection_id].connected_intersections_id[k] == i) {
-						intersections[connected_intersection_id].connected_intersections_id[k] = intersections.size() - 1;
-						break;
-					}
-				}
-				for (int k = 0; k < intersections[i].connected_intersections_id.size(); k++) {
-					if (intersections[i].connected_intersections_id[k] == connected_intersection_id) {
-						intersections[i].connected_intersections_id[k] = intersections.size() - 1;
-						break;
-					}
-				}*/
-
-			}
-		}
-
-		//za bardzo w prawo
-		if (intersections[i].x > canvas_width + border_thickness) {
-			for (int j = 0; j < intersections[i].connected_intersections_id.size(); j++) {
-				int connected_intersection_id = intersections[i].connected_intersections_id[j];
-				if (intersections[connected_intersection_id].type == OUT_OF_BOUNDS) continue;
-				Vector2 new_intersection = { 0,0 };
-
-				if (!CheckCollisionLines({ (float)intersections[i].x, (float)intersections[i].y },
-					{ (float)intersections[connected_intersection_id].x, (float)intersections[connected_intersection_id].y }, //XD a mog³em to robiæ na wskaŸnikach
-					{ (float)canvas_width + border_thickness, -(float)border_thickness },
-					{ (float)canvas_width + border_thickness, (float)canvas_height + border_thickness },
-					&new_intersection)) {
-					break;
-				}
-					
-				intersections.push_back({ (int)new_intersection.x, (int)new_intersection.y, ON_BORDER });
-				fixConnectionsOfNewIntersection(connected_intersection_id, i, intersections);
-			}
-
-		}
-
-		//za bardzo do góry
-		if (intersections[i].y < -border_thickness) {
-			for (int j = 0; j < intersections[i].connected_intersections_id.size(); j++) {
-				int connected_intersection_id = intersections[i].connected_intersections_id[j];
-				if (intersections[connected_intersection_id].type == OUT_OF_BOUNDS) continue;
-				Vector2 new_intersection = { 0,0 };
-
-				if (!CheckCollisionLines({ (float)intersections[i].x, (float)intersections[i].y },
-					{ (float)intersections[connected_intersection_id].x, (float)intersections[connected_intersection_id].y }, //XD a mog³em to robiæ na wskaŸnikach
-					{ -(float)border_thickness, -(float)border_thickness },
-					{ (float)canvas_width + border_thickness, -(float)border_thickness },
-					&new_intersection)) {
-					break;
-				}
-
-				intersections.push_back({ (int)new_intersection.x, (int)new_intersection.y, ON_BORDER });
-				fixConnectionsOfNewIntersection(connected_intersection_id, i, intersections);
-			}
-		}
-
-		//za bardzo na dó³
-		if (intersections[i].y > canvas_height + border_thickness) {
-			for (int j = 0; j < intersections[i].connected_intersections_id.size(); j++) {
-				int connected_intersection_id = intersections[i].connected_intersections_id[j];
-				if (intersections[connected_intersection_id].type == OUT_OF_BOUNDS) continue;
-				Vector2 new_intersection = { 0,0 };
-
-				if (!CheckCollisionLines({ (float)intersections[i].x, (float)intersections[i].y },
-					{ (float)intersections[connected_intersection_id].x, (float)intersections[connected_intersection_id].y }, //XD a mog³em to robiæ na wskaŸnikach
-					{ -(float)border_thickness, (float)canvas_height + border_thickness },
-					{ (float)canvas_width + border_thickness, (float)canvas_height + border_thickness },
-					&new_intersection)) {
-					break;
-				}
-
-				intersections.push_back({ (int)new_intersection.x, (int)new_intersection.y, ON_BORDER });
-				fixConnectionsOfNewIntersection(connected_intersection_id, i, intersections);
-			}
+		if (plots[i].adj_intersections.size() <= 3) {
+			plots[i].isValid = false;
 		}
 	}
 
-	/*
-
-	for (int i = 0; i < intersections.size(); i++) {
-		if (intersections[i].road_id.size() < 3) {
-
-		}
-	}*/
-}
-
-void TownMap::fixPlots() {
+	//³¹czenie s¹siaduj¹cych dzia³ek
 	for (Plot& p : plots) {
-		for (int j = 0; j < p.adj_intersection_id.size(); j++) {
-			if (intersections[p.adj_intersection_id[j]].type == OUT_OF_BOUNDS) {
-				for (int c : intersections[p.adj_intersection_id[j]].connected_intersections_id) {
-					if (intersections[c].type == ON_BORDER &&
-						p.hasIntersection(intersections[c].connected_intersections_id[0])) {
-
-						p.adj_intersection_id.push_back(c);
-					}
-				}
-				p.adj_intersection_id.erase(p.adj_intersection_id.begin() + j);
-				j--;
+		for (Intersection* i : p.adj_intersections) {
+			if (i->origin_triangle->p1 != p.center && !p.hasNeighbourWithCenter(i->origin_triangle->p1)) {
+				p.neighbours.push_back(findPlotWithCenter(i->origin_triangle->p1));
+			}
+			if (i->origin_triangle->p2 != p.center && !p.hasNeighbourWithCenter(i->origin_triangle->p2)) {
+				p.neighbours.push_back(findPlotWithCenter(i->origin_triangle->p2));
+			}
+			if (i->origin_triangle->p3 != p.center && !p.hasNeighbourWithCenter(i->origin_triangle->p3)) {
+				p.neighbours.push_back(findPlotWithCenter(i->origin_triangle->p3));
 			}
 		}
 	}
 	
-
 }
-
 
 void TownMap::calculateBorders() {
 	for (int i = 0; i < plot_centers.size(); i++) {
-		plots[i].calculateActualBorders(intersections, plot_centers[i]);
+		plots[i].calculateActualBorders();
 	}
-
 }

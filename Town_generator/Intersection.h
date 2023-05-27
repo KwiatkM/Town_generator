@@ -1,25 +1,30 @@
 #pragma once
+#include "utility.h"
+#include "Triangle.h"
 #include <vector>
 
 enum intersection_type {
-	UNDEFINED,
-	OUT_OF_BOUNDS,
-	INSIDE_TOWN,
-	ON_BORDER
+	ROAD,
+	WALL,
+	RIVER
+};
+
+enum intersection_position {
+	I_INSIDE,
+	I_OUTSIDE,
+	I_ON_BORDER
 };
 
 class Intersection {
 public:
-	int x, y;
-	intersection_type type = INSIDE_TOWN;
-	std::vector<int> connected_intersections_id;
-	
+	point_t coords;
+	Triangle* origin_triangle = nullptr;
+	intersection_type type = ROAD;
+	intersection_position position = I_INSIDE;
 	std::vector<Intersection*> connected_intersections;
 	
-
-
-	Intersection(int _x, int _y);
-	Intersection(int _x, int _y, intersection_type _type);
+	Intersection(point_t _coords);
+	Intersection(point_t _coords, intersection_type _type);
 	
 };
 

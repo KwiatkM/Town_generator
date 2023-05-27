@@ -70,9 +70,9 @@ int main(void)
 
         }else{
 			for (int i = 0; i < tMap.plot_centers.size(); i++) { //wype³nianie dzia³ek 
-				if (tMap.plots[i].type == VALID) {
-					for (int j = 1; j < tMap.plots[i].adj_intersection_id.size(); j++) {
-						for (int k = 2; k < tMap.plots[i].adj_intersection_id.size(); k++) {
+				if (tMap.plots[i].isValid) {
+					for (int j = 1; j < tMap.plots[i].adj_intersections.size(); j++) {
+						for (int k = 2; k < tMap.plots[i].adj_intersections.size(); k++) {
 							Vector2 tr1 = { (float)tMap.plots[i].actual_border[0].x, (float)tMap.plots[i].actual_border[0].y };
 							Vector2 tr2 = { (float)tMap.plots[i].actual_border[j].x, (float)tMap.plots[i].actual_border[j].y };
 							Vector2 tr3 = { (float)tMap.plots[i].actual_border[k].x, (float)tMap.plots[i].actual_border[k].y };
@@ -89,73 +89,48 @@ int main(void)
 
             //rysowanie punktów
             for (int i = 0; i < tMap.plot_centers.size(); i++) {
-                //DrawCircle(gr.GetPoint(i).x, gr.GetPoint(i).y, 4, BLACK);
                 DrawCircle(tMap.plot_centers[i].x,
                     tMap.plot_centers[i].y,
                     4,
                     BLACK);
-                /*for (int j : tMap.plots[i].adj_intersection_id) {
-                    DrawLine(tMap.plot_centers[i].x,
-                        tMap.plot_centers[i].y,
-                        tMap.intersections[j].x,
-                        tMap.intersections[j].y,
-                        BLACK);
-                }*/
             }
 
             //rysowanie trójk¹tów
             for (Triangle& t : tMap.triangles) {
-                DrawLine(tMap.plot_centers[t.p1].x, tMap.plot_centers[t.p1].y,
-                    tMap.plot_centers[t.p2].x, tMap.plot_centers[t.p2].y,
-                    BLACK);
-                DrawLine(tMap.plot_centers[t.p2].x, tMap.plot_centers[t.p2].y,
-                    tMap.plot_centers[t.p3].x, tMap.plot_centers[t.p3].y,
-                    BLACK);
-                DrawLine(tMap.plot_centers[t.p1].x, tMap.plot_centers[t.p1].y,
-                    tMap.plot_centers[t.p3].x, tMap.plot_centers[t.p3].y,
-                    BLACK);
+                DrawLine(t.p1->x, t.p1->y,
+                        t.p2->x, t.p2->y,
+                        BLACK);
+                DrawLine(t.p2->x, t.p2->y,
+                        t.p3->x, t.p3->y,
+                        BLACK);
+                DrawLine(t.p1->x, t.p1->y,
+                        t.p3->x, t.p3->y,
+                        BLACK);
                 //rysowanie skrzy¿owañ
-                DrawCircle(t.circumcircle.center.x,
-                    t.circumcircle.center.y,
+                DrawCircle(t.getCircumcircleCenter().x,
+                    t.getCircumcircleCenter().y,
                     4,
                     RED);
             }
             //rysowanie skrzy¿owanañ z 2 przyleg³ymi drogami
             for (int i = 0; i < tMap.intersections.size(); i++) {
-                if (tMap.intersections[i].connected_intersections_id.size() < 3) {
-                    DrawCircle(tMap.intersections[i].x,
-                        tMap.intersections[i].y,
+                if (tMap.intersections[i].connected_intersections.size() < 3) {
+                    DrawCircle(tMap.intersections[i].coords.x,
+                        tMap.intersections[i].coords.y,
                         6,
                         ORANGE);
                 }
             }
-            //rysowanie dróg
-            /*for (int i = 0; i < tMap.roads.size(); i++) {
-                DrawLine(tMap.intersections[tMap.roads[i].inter_id1].x,
-                    tMap.intersections[tMap.roads[i].inter_id1].y,
-                    tMap.intersections[tMap.roads[i].inter_id2].x,
-                    tMap.intersections[tMap.roads[i].inter_id2].y,
-                    BLUE);
-            }*/
+            
             for (int i = 0; i < tMap.intersections.size(); i++) {
-                for (int j = 0; j < tMap.intersections[i].connected_intersections_id.size(); j++) {
+                for (int j = 0; j < tMap.intersections[i].connected_intersections.size(); j++) {
                     
-                    DrawLine(tMap.intersections[i].x,
-                        tMap.intersections[i].y,
-                        tMap.intersections[tMap.intersections[i].connected_intersections_id[j]].x,
-                        tMap.intersections[tMap.intersections[i].connected_intersections_id[j]].y,
+                    DrawLine(tMap.intersections[i].coords.x,
+                        tMap.intersections[i].coords.y,
+                        tMap.intersections[i].connected_intersections[j]->coords.x,
+                        tMap.intersections[i].connected_intersections[j]->coords.y,
                         BLUE);
                     
-                }
-            }
-
-            //rysowanie skrzy¿owañ granicznych
-            for (int i = 0; i < tMap.intersections.size(); i++) {
-                if (tMap.intersections[i].type == ON_BORDER) {
-                    DrawCircle(tMap.intersections[i].x,
-                        tMap.intersections[i].y,
-                        6,
-                        GREEN);
                 }
             }
             

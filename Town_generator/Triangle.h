@@ -5,16 +5,20 @@
 
 class Triangle {
 public:
-	int p1, p2, p3;
+	//int p1, p2, p3;
+	point_t* p1, *p2, *p3;
 	circle circumcircle;
-	bool is_bad = false;
 
+	bool is_bad = false; //do algorytmu triangulacji
 
-	Triangle(int _p1, int _p2, int _p3);
-	Triangle(int _p1, int _p2, int _p3, std::vector<point_t> plot_centers);
+	Triangle(point_t* _p1, point_t* _p2, point_t* _p3);
+	
 	circle getCircumcircle();
-	void updateCircumcircle(std::vector<point_t> plot_centers);
+	double getCircumcircleRadius2();
+	point_t getCircumcircleCenter();
+
+	void updateCircumcircle();
 	bool isAdjacent(Triangle triangle);
-	bool hasPoint(int p);
-	bool circumcircleContains(point_t p);
+	bool hasPoint(point_t *p);
+	bool circumcircleContains(point_t *p);
 };

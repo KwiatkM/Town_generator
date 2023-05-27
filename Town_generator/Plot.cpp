@@ -3,36 +3,49 @@
 
 
 Plot::Plot() {
-	center_id = -1;
+	center = nullptr;
 }
 
-Plot::Plot(int _center_id) {
-	center_id = _center_id;
+Plot::Plot(point_t* _center) {
+	center = _center;
 }
 
-bool Plot::hasIntersection(int intersecion_id) {
-	for (int i : adj_intersection_id) {
-		if (intersecion_id == i) return true;
+bool Plot::hasIntersection(Intersection* intersection) {
+	for (Intersection* i : adj_intersections) {
+		if (intersection == i) return true;
 	}
 	return false;
 }
 
-void Plot::calculateActualBorders(std::vector<Intersection>& intersections, point_t center) {
-	if (adj_intersection_id.size() > 0) {
+bool Plot::hasNeighbour(Plot* n) {
+	for (Plot* p : neighbours) {
+		if (n == p) return true;
+	}
+	return false;
+}
 
+bool Plot::hasNeighbourWithCenter(point_t* c) {
+	for (Plot* p : neighbours) {
+		if (p->center == c) return true;
+	}
+	return false;
+}
+
+void Plot::calculateActualBorders() {
+	if (adj_intersections.size() > 0) {
 
 		actual_border.clear();
 		point_t avg_center = { 0,0 };
-		for (int i = 0; i < adj_intersection_id.size(); i++) {
-			avg_center.x += intersections[adj_intersection_id[i]].x;
-			avg_center.y += intersections[adj_intersection_id[i]].y;
+		for (int i = 0; i < adj_intersections.size(); i++) {
+			avg_center.x += adj_intersections[i]->coords.x;
+			avg_center.y += adj_intersections[i]->coords.y;
 		}
-		avg_center.x /= adj_intersection_id.size();
-		avg_center.y /= adj_intersection_id.size();
+		avg_center.x /= adj_intersections.size();
+		avg_center.y /= adj_intersections.size();
 
-		for (int i = 0; i < adj_intersection_id.size(); i++) {
-			float dx = avg_center.x - intersections[adj_intersection_id[i]].x;
-			float dy = avg_center.y - intersections[adj_intersection_id[i]].y;
+		for (int i = 0; i < adj_intersections.size(); i++) {
+			float dx = avg_center.x - adj_intersections[i]->coords.x;
+			float dy = avg_center.y - adj_intersections[i]->coords.y;
 			float scaled_dx = dx * BORDER_SCALE;
 			float scaled_dy = dy * BORDER_SCALE;
 
@@ -42,16 +55,3 @@ void Plot::calculateActualBorders(std::vector<Intersection>& intersections, poin
 	}
 }
 
-//void Plot::calculateActualBorders(std::vector<Intersection>& intersections, point_t center) {
-//	actual_border.clear();
-//	for (int i = 0; i < adj_intersection_id.size(); i++) {
-//		float dx = center.x - intersections[adj_intersection_id[i]].x;
-//		float dy = center.y - intersections[adj_intersection_id[i]].y;
-//		float scaled_dx = dx * BORDER_SCALE;
-//		float scaled_dy = dy * BORDER_SCALE;
-//		//if (scaled_dx < 3.0) scaled_dx = 3.0;  <---poprawiæ
-//		//if (scaled_dy < 3.0) scaled_dy = 3.0;
-//
-//		actual_border.push_back({ (int)(center.x - scaled_dx) , (int)(center.y - scaled_dy) });
-//	}
-//}

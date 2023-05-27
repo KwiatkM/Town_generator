@@ -1,7 +1,7 @@
 #include "Road.h"
 
-Road::Road(int id1, int id2) {
-	inter_id1 = id1;
-	inter_id2 = id2;
+Road::Road(Intersection* _intersection1, Intersection* _intersection2) {
+	intersection1 = _intersection1;
+	intersection2 = _intersection2;
 }
 

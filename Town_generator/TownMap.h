@@ -30,11 +30,10 @@ public:
 	void generatePlotCenters(int number_of_points, int seed);
 	void triangulate();
 	void createPlots();
-	void boundPlots();
-	void fixPlots();
 	void calculateBorders();
 
 private:
 	void addOutsidePoints();
+	Plot* findPlotWithCenter(point_t* center);
 
 };

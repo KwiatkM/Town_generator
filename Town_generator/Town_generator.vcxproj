@@ -130,22 +130,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Graph.cpp" />
     <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Intersection.h" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="metric.cpp" />
     <ClCompile Include="Plot.cpp" />
-    <ClCompile Include="point_gen.cpp" />
     <ClCompile Include="Road.cpp" />
     <ClCompile Include="TownMap.cpp" />
     <ClCompile Include="Triangle.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Graph.h" />
-    <ClInclude Include="metric.h" />
     <ClInclude Include="Plot.h" />
-    <ClInclude Include="point_gen.h" />
     <ClInclude Include="Road.h" />
     <ClInclude Include="TownMap.h" />
     <ClInclude Include="Triangle.h" />

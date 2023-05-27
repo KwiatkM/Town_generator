@@ -1,8 +1,9 @@
 #pragma once
+#include "Intersection.h"
 
 class Road {
 public:
-	int inter_id1, inter_id2;
+	Intersection* intersection1, * intersection2;
 
-	Road(int id1, int id2);
+	Road(Intersection* _intersection1, Intersection* _intersection2);
 };
