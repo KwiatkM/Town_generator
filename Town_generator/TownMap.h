@@ -18,22 +18,54 @@ public:
 	std::vector<Plot> plots;
 	std::vector<Intersection> intersections;
 	std::vector<Road> roads;
-private:
+	std::vector<std::vector<Intersection*>> outsideConnections;
+
+
+
 	int canvas_width;
 	int canvas_height;
-	const int border_thickness = 50;
+private:
+	const int ofset = 10;
+	const int border_thickness = -60;
+
+	
+
+public:
+	mapOptions options = {};
+	Intersection* riverEnd = nullptr;
+	
 
 public:
 	TownMap(int _n_points, int _canvas_width, int _canvas_height);
+
 	void generate();
-	void generate(int number_of_points, int seed);
-	void generatePlotCenters(int number_of_points, int seed);
+	//void generate(int number_of_points, int seed);
+	void generateFromExistingPoints();
+	void generatePlotCenters();
+	void generatePlotCenters_Grid();
 	void triangulate();
 	void createPlots();
+	void menagePlotAndIntersectionsTypes();
 	void calculateBorders();
 
+	void resizeCanvas(int canvas_width_, int canvas_height_);
+	void clear();
+
 private:
+	
+
+	Intersection* createRiver();
+	void createOutsideConnections(int n);
+
 	void addOutsidePoints();
 	Plot* findPlotWithCenter(point_t* center);
+	Plot* getRandomPlot(plot_type type);
+	Plot* getRandomFarmlandStartingPoint();
+
+	Intersection* getRandomIntersection_Position(intersection_position pos, int seed);
+	Intersection* getRandomUnusedIntersection_Position(intersection_position pos);
+	Intersection* gerRandomOceanIntersection();
+	Intersection* getFurthestOutsideIntersection(Intersection* inter);
+	Intersection* getRandomEdgeIntersection(int seed);
 
 };

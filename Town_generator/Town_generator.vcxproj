@@ -130,17 +130,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Building.cpp" />
     <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Intersection.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Plot.cpp" />
     <ClCompile Include="Road.cpp" />
+    <ClCompile Include="TGenCanvas.cpp" />
+    <ClCompile Include="TGenControl.cpp" />
+    <ClCompile Include="TGenGUI.cpp" />
     <ClCompile Include="TownMap.cpp" />
     <ClCompile Include="Triangle.cpp" />
+    <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Building.h" />
     <ClInclude Include="Plot.h" />
     <ClInclude Include="Road.h" />
+    <ClInclude Include="TGenCanvas.h" />
+    <ClInclude Include="TGenControl.h" />
+    <ClInclude Include="TGenGUI.h" />
     <ClInclude Include="TownMap.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="utility.h" />
